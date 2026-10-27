@@ -27,7 +27,7 @@ from validitysensor.init_data_dir import PYTHON_VALIDITY_DATA_DIR, init_data_dir
 from validitysensor.sensor import sensor, RebootException
 from validitysensor.sid import sid_from_string
 from validitysensor.tls import tls
-from validitysensor.usb import usb
+from validitysensor.usb import usb, CancelledException
 from validitysensor.fingerprint_constants import finger_ids
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -129,6 +129,9 @@ class Device(dbus.service.Object):
                 logging.exception(e)
                 self.VerifyStatus('verify-no-match', True)
                 loop.quit()
+            except CancelledException:
+                logging.info('finger prompt cancelled without a swipe - expected during lock/unlock')
+                self.VerifyStatus('verify-no-match', True)
             except Exception as e:
                 logging.exception(e)
                 self.VerifyStatus('verify-no-match', True)
@@ -162,6 +165,9 @@ class Device(dbus.service.Object):
                 logging.exception(e)
                 self.EnrollStatus('enroll-failed', True)
                 loop.quit()
+            except CancelledException:
+                logging.info('finger prompt cancelled without a swipe - expected during lock/unlock')
+                self.EnrollStatus('enroll-failed', True)
             except Exception as e:
                 logging.exception(e)
                 self.EnrollStatus('enroll-failed', True)
